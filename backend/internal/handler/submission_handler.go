@@ -41,6 +41,27 @@ func (h *SubmissionHandler) Submit(c *gin.Context) {
 	util.Success(c, resp)
 }
 
+// TrialRun 试运行：用题目前两条示例输入运行，不判对错、不留提交记录。
+func (h *SubmissionHandler) TrialRun(c *gin.Context) {
+	userID := getUserID(c)
+	problemID, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		_ = c.Error(util.NewAppError(constants.CodeBadRequest, "无效的题目 ID"))
+		return
+	}
+	var req dto.TrialRunRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		_ = c.Error(util.NewAppError(util.ValidationCode(), util.ValidationMessage()))
+		return
+	}
+	resp, err := h.submissionService.TrialRun(c.Request.Context(), userID, problemID, &req)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	util.Success(c, resp)
+}
+
 // Get 查询提交详情。
 func (h *SubmissionHandler) Get(c *gin.Context) {
 	userID := getUserID(c)

@@ -42,6 +42,8 @@ func (s *DashboardService) Get(ctx context.Context, userID primitive.ObjectID) (
 		TotalSubmissions: stat.TotalSubmissions,
 		StreakDays:       user.StreakDays,
 		Points:           user.Points,
+		TotalTrialRuns:   stat.TotalTrialRuns,
+		TrialRunsToday:   stat.DailyTrialRuns[util.SignInDailyKey(time.Now())],
 		LanguageDist:     stat.LanguageDist,
 		DailyActivity:    s.heatmap(stat.DailyActivity),
 	}

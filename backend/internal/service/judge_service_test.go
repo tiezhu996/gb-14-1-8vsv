@@ -90,6 +90,55 @@ func TestJudgePythonTimeout(t *testing.T) {
 	}
 }
 
+func TestJudgeTrialRun(t *testing.T) {
+	if !hasPython() {
+		t.Skip("python3 not available")
+	}
+	j := newTestJudge(t)
+	code := "a, b = map(int, input().split())\nprint(a + b)"
+	tcs := []model.TestCase{
+		{Input: "1 2", Output: "3"},
+		{Input: "10 20", Output: "30"},
+		{Input: "-5 8", Output: "3"},
+	}
+	results := j.TrialRun(context.Background(), constants.LanguagePython, code, tcs, 10)
+	// 试运行只跑前两条示例
+	if len(results) != 2 {
+		t.Fatalf("got %d trial results, want 2", len(results))
+	}
+	if results[0].Actual != "3\n" || results[1].Actual != "30\n" {
+		t.Errorf("unexpected actual outputs: %+v", results)
+	}
+	if results[0].RuntimeMs < 0 || results[1].RuntimeMs < 0 {
+		t.Errorf("runtime should be non-negative: %+v", results)
+	}
+	if results[0].ErrorMessage != "" {
+		t.Errorf("first sample should have no error, got %q", results[0].ErrorMessage)
+	}
+}
+
+func TestJudgeTrialRunRuntimeError(t *testing.T) {
+	if !hasPython() {
+		t.Skip("python3 not available")
+	}
+	j := newTestJudge(t)
+	code := "raise ValueError('boom')"
+	tcs := []model.TestCase{
+		{Input: "1 2", Output: "3"},
+		{Input: "10 20", Output: "30"},
+	}
+	results := j.TrialRun(context.Background(), constants.LanguagePython, code, tcs, 10)
+	// 试运行即使第一条报错也不提前终止，两条都应返回
+	if len(results) != 2 {
+		t.Fatalf("got %d trial results, want 2", len(results))
+	}
+	for i, r := range results {
+		if r.ErrorMessage == "" {
+			t.Errorf("result %d expected error message", i)
+		}
+	}
+}
+
 func TestCalcScore(t *testing.T) {
 	tests := []struct {
 		name   string

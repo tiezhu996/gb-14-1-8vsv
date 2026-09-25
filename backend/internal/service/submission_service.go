@@ -113,6 +113,39 @@ func (s *SubmissionService) Submit(ctx context.Context, userID primitive.ObjectI
 	return &resp, nil
 }
 
+// TrialRun 试运行：取题目前两条示例输入在服务端运行，只返回实际输出与耗时。
+// 与 Submit 的区别：不创建提交记录、不增加题目提交/通过数、不累计积分与成就，
+// 仅累加个人统计中的试运行次数（仪表盘展示今日试运行次数）。
+func (s *SubmissionService) TrialRun(ctx context.Context, userID primitive.ObjectID, problemID primitive.ObjectID, req *dto.TrialRunRequest) (*dto.TrialRunResponse, error) {
+	problem, err := s.problemRepo.FindByID(ctx, problemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrProblemNotFound) {
+			return nil, util.WrapAppError(constants.CodeProblemNotFound, constants.MsgProblemNotFound, err)
+		}
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	if problem.Status != constants.StatusPublished {
+		return nil, util.WrapAppError(constants.CodeProblemLocked, constants.MsgProblemLocked, nil)
+	}
+	if !strutil.Contains(problem.Languages, req.Language) {
+		return nil, util.WrapAppError(constants.CodeJudgeLanguage, constants.MsgJudgeLanguage, nil)
+	}
+	if len(problem.TestCases) == 0 {
+		return nil, util.WrapAppError(constants.CodeProblemNoCases, constants.MsgProblemNoCases, nil)
+	}
+
+	results := s.judge.TrialRun(ctx, req.Language, req.Code, problem.TestCases, problem.TimeLimit)
+
+	// 试运行只记次数，不写 submissions、不动提交数/通过数/积分/成就。
+	dayKey := util.SignInDailyKey(time.Now())
+	if err := s.statRepo.AddTrialRun(ctx, userID, dayKey); err != nil {
+		s.logger.Warn("add trial run stat failed", "user_id", userID.Hex(), "error", err.Error())
+	}
+
+	resp := dto.ToTrialRunResponse(problemID.Hex(), problem.Title, req.Language, results)
+	return &resp, nil
+}
+
 // Get 查询提交记录（本人或管理员）。
 func (s *SubmissionService) Get(ctx context.Context, submissionID, userID primitive.ObjectID, role string) (*dto.SubmissionResponse, error) {
 	sub, err := s.subRepo.FindByID(ctx, submissionID)

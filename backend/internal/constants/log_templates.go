@@ -40,6 +40,8 @@ const (
 	LogSubmissionPartial    = "submission.partial"
 	LogSubmissionError      = "submission.error"
 	LogSubmissionTimeout    = "submission.timeout"
+	LogTrialRunExecuted     = "trial_run.executed"
+	LogTrialRunFailed       = "trial_run.failed"
 	LogJudgeCompileFailed   = "judge.compile_failed"
 	LogJudgeRunFailed       = "judge.run_failed"
 	LogDiscussionCreated    = "discussion.created"

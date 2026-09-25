@@ -14,6 +14,10 @@ type UserStat struct {
 	CompletedCourses    int64              `bson:"completed_courses" json:"completed_courses"`
 	TotalSubmissions    int64              `bson:"total_submissions" json:"total_submissions"`
 	AcceptedSubmissions int64              `bson:"accepted_submissions" json:"accepted_submissions"`
+	// TotalTrialRuns 累计试运行次数（试运行不计入提交数，单独统计）。
+	TotalTrialRuns int64 `bson:"total_trial_runs" json:"total_trial_runs"`
+	// DailyTrialRuns 每日试运行次数：yyyy-MM-dd -> 次数，供个人仪表盘展示"今日试运行"。
+	DailyTrialRuns map[string]int64 `bson:"daily_trial_runs" json:"daily_trial_runs"`
 	// LanguageDist 各语言解题分布：language -> count。
 	LanguageDist map[string]int64 `bson:"language_dist" json:"language_dist"`
 	// DailyActivity 每日学习热力图：yyyy-MM-dd -> 活跃次数。

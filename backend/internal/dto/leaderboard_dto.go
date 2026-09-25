@@ -18,6 +18,8 @@ type DashboardResponse struct {
 	TotalSubmissions   int64            `json:"total_submissions"`
 	StreakDays         int              `json:"streak_days"`
 	Points             int64            `json:"points"`
+	TotalTrialRuns     int64            `json:"total_trial_runs"`
+	TrialRunsToday     int64            `json:"trial_runs_today"`
 	LanguageDist       map[string]int64 `json:"language_dist"`
 	DailyActivity      map[string]int64 `json:"daily_activity"`
 }

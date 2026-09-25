@@ -35,7 +35,7 @@ docker compose down -v --remove-orphans
 1. **学习路径管理**：结构化课程（如 "Python 入门→Web 开发→数据分析"），章节 + 知识点 + 练习，学习进度与热力图跟踪
 2. **课程内容管理**：管理员创建课程（Markdown 图文教程），章节拆解、代码片段展示
 3. **在线 IDE**：Monaco Editor 内嵌，支持 Python / JavaScript / Java 语法高亮与自动补全；服务端沙箱评测，单用例超时 10 秒自动终止
-4. **编程题目评测**：ACM 风格，多测试用例逐条运行，判定 通过 / 部分通过 / 运行错误 / 超时，展示输入、期望输出与实际输出对比
+4. **编程题目评测**：ACM 风格，多测试用例逐条运行，判定 通过 / 部分通过 / 运行错误 / 超时，展示输入、期望输出与实际输出对比；支持**试运行**：仅取题目前两条示例输入在服务端运行，页面展示每条实际输出与耗时，不返回期望输出、不判对错，不留提交记录（提交数、通过数、积分、成就均不变），仅在个人仪表盘累计"今日试运行"次数
 5. **排行榜与成就系统**：解题数量 × 难度加权积分（日榜 / 周榜 / 总榜）；成就徽章（连续签到 7 天、完成 10/100 题、首次通过困难题等）
 6. **讨论社区**：每道题专属讨论区，支持 Markdown 与代码块、点赞、按最佳答案排序
 7. **个人学习仪表盘**：累计学习时长、完成课程数、解题总数、各语言解题分布饼图、近 90 天每日学习热力图
@@ -217,6 +217,7 @@ curl -sS -X POST http://localhost:3010/api/v1/problems \
 | PUT | /api/v1/problems/:id/status | 状态流转 | 管理员 | ProblemService.UpdateStatus |
 | DELETE | /api/v1/problems/:id | 删除题目 | 管理员 | ProblemService.Delete |
 | POST | /api/v1/problems/:id/submit | 提交评测 | 登录 | SubmissionService.Submit + JudgeService.Judge |
+| POST | /api/v1/problems/:id/trial | 试运行（前两条示例，不判对错、不留记录） | 登录 | SubmissionService.TrialRun + JudgeService.TrialRun |
 | GET | /api/v1/submissions | 提交记录 | 登录/管理员 | SubmissionService.List |
 | GET | /api/v1/submissions/:id | 提交详情 | 本人/管理员 | SubmissionService.Get |
 | GET | /api/v1/problems/:id/discussions | 讨论区 | 登录 | DiscussionService.ListByProblem |

@@ -41,6 +41,8 @@ func (r *UserStatRepository) Upsert(ctx context.Context, userID primitive.Object
 			"completed_courses":  0,
 			"total_submissions":  0,
 			"accepted_submissions": 0,
+			"total_trial_runs":   0,
+			"daily_trial_runs":   bson.M{},
 			"language_dist":      bson.M{},
 			"daily_activity":     bson.M{},
 			"created_at":         now,
@@ -102,4 +104,17 @@ func (r *UserStatRepository) GetByUser(ctx context.Context, userID primitive.Obj
 		return nil, fmt.Errorf("get user stat: %w", err)
 	}
 	return &s, nil
+}
+
+// AddTrialRun 原子增加试运行次数并记录每日试运行次数。
+// 只更新试运行字段，不触碰提交数/通过数（试运行不算提交）。
+func (r *UserStatRepository) AddTrialRun(ctx context.Context, userID primitive.ObjectID, dayKey string) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"user_id": userID}, bson.M{
+		"$inc": bson.M{"total_trial_runs": 1, "daily_trial_runs." + dayKey: 1},
+		"$set": bson.M{"updated_at": time.Now()},
+	})
+	if err != nil {
+		return fmt.Errorf("add trial run stat: %w", err)
+	}
+	return nil
 }

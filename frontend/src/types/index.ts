@@ -84,6 +84,22 @@ export interface JudgeResult {
   error_message: string
 }
 
+export interface TrialCaseResult {
+  test_case_index: number
+  input: string
+  actual: string
+  runtime_ms: number
+  error_message: string
+}
+
+export interface TrialRun {
+  problem_id: string
+  problem_title: string
+  language: string
+  results: TrialCaseResult[]
+  total_runtime_ms: number
+}
+
 export interface Submission {
   id: string
   user_id: string
@@ -142,6 +158,8 @@ export interface Dashboard {
   total_submissions: number
   streak_days: number
   points: number
+  total_trial_runs: number
+  trial_runs_today: number
   language_dist: Record<string, number>
   daily_activity: Record<string, number>
 }

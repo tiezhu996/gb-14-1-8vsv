@@ -12,7 +12,7 @@ CodeLearn 使用 MongoDB，无传统 SQL 迁移脚本。集合结构由 `interna
 - achievements（成就定义）
 - user_achievements（user_id+code 唯一索引）
 - audit_logs（user_id/entity 查询索引）
-- user_stats（user_id 唯一索引）
+- user_stats（user_id 唯一索引；含 total_trial_runs 累计试运行次数、daily_trial_runs 每日试运行次数，试运行不计入 total_submissions）
 
 演示数据（幂等种子，见 `internal/seed/seed.go`）：
 - 管理员：admin / admin123

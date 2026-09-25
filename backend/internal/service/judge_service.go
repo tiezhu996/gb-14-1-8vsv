@@ -86,6 +86,40 @@ func (s *JudgeService) Judge(ctx context.Context, language, code string, testCas
 	return results, constants.SubmissionPartial, calcScore(passed, len(testCases)), totalRuntime, ""
 }
 
+// TrialRun 试运行：只取题目前两条示例输入逐条运行，返回每条的实际输出与耗时。
+// 与 Judge 的区别：不返回期望输出、不判定对错、不提前终止、不产生任何提交记录。
+func (s *JudgeService) TrialRun(ctx context.Context, language, code string, testCases []model.TestCase, timeLimit int) []model.TrialCaseResult {
+	if timeLimit <= 0 {
+		timeLimit = constants.DefaultJudgeTimeout
+	}
+	samples := pickTrialSamples(testCases, constants.TrialSampleCount)
+	results := make([]model.TrialCaseResult, 0, len(samples))
+	for i, tc := range samples {
+		res := model.TrialCaseResult{TestCaseIndex: i, Input: tc.Input}
+		actual, runtimeMs, runErr := s.runCode(ctx, language, code, tc.Input, timeLimit)
+		res.Actual = actual
+		res.RuntimeMs = runtimeMs
+		if runErr != nil {
+			res.ErrorMessage = runErr.Error()
+			if isTimeoutErr(runErr) {
+				res.ErrorMessage = fmt.Sprintf(constants.MsgJudgeTimeout, timeLimit)
+			}
+			s.logger.Warn(constants.LogTrialRunFailed, "test_case", i, "error", res.ErrorMessage)
+		}
+		results = append(results, res)
+	}
+	s.logger.Info(constants.LogTrialRunExecuted, "samples", len(results))
+	return results
+}
+
+// pickTrialSamples 截取试运行使用的前 n 条示例输入（不足则全部）。
+func pickTrialSamples(testCases []model.TestCase, n int) []model.TestCase {
+	if len(testCases) <= n {
+		return testCases
+	}
+	return testCases[:n]
+}
+
 // runCode 在独立工作目录中运行用户代码。
 func (s *JudgeService) runCode(ctx context.Context, language, code, input string, timeoutSeconds int) (string, int64, error) {
 	dir, err := os.MkdirTemp(s.workDir, "run-*")

@@ -8,8 +8,8 @@ import * as monaco from 'monaco-editor'
 import { loader } from '@monaco-editor/react'
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
 import { getProblem } from '../../api/problem'
-import { submitCode } from '../../api/submission'
-import type { Problem, Submission } from '../../types'
+import { submitCode, trialRun } from '../../api/submission'
+import type { Problem, Submission, TrialRun } from '../../types'
 import StatusBadge from '../../components/StatusBadge'
 import LanguageSelect from '../../components/LanguageSelect'
 import Discussions from './Discussions'
@@ -34,6 +34,8 @@ export default function ProblemDetail() {
   const [code, setCode] = useState(STARTER_CODE.python)
   const [submitting, setSubmitting] = useState(false)
   const [submission, setSubmission] = useState<Submission | null>(null)
+  const [trialing, setTrialing] = useState(false)
+  const [trial, setTrial] = useState<TrialRun | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -80,6 +82,21 @@ export default function ProblemDetail() {
     }
   }
 
+  const doTrial = async () => {
+    if (!id) return
+    setTrialing(true)
+    setTrial(null)
+    setError('')
+    try {
+      const resp = await trialRun(id, { language, code })
+      setTrial(resp)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setTrialing(false)
+    }
+  }
+
   if (!problem) {
     return <div className="py-20 text-center text-gray-400">{error || '加载中...'}</div>
   }
@@ -113,13 +130,23 @@ export default function ProblemDetail() {
             <span className="font-semibold text-gray-800">在线 IDE</span>
             <LanguageSelect value={language} onChange={switchLanguage} disabled={submitting} />
           </div>
-          <button
-            onClick={doSubmit}
-            disabled={submitting}
-            className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-          >
-            {submitting ? '评测中...' : '🚀 提交评测'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={doTrial}
+              disabled={trialing || submitting}
+              className="rounded-lg border border-brand-500 px-5 py-2 text-sm font-semibold text-brand-600 hover:bg-brand-50 disabled:opacity-60"
+              title="用前两条示例输入试运行，不判对错、不计提交"
+            >
+              {trialing ? '试运行中...' : '🧪 试运行'}
+            </button>
+            <button
+              onClick={doSubmit}
+              disabled={submitting || trialing}
+              className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              {submitting ? '评测中...' : '🚀 提交评测'}
+            </button>
+          </div>
         </div>
         <Editor
           height="420px"
@@ -130,6 +157,47 @@ export default function ProblemDetail() {
           theme="vs"
         />
       </div>
+
+      {trial && (
+        <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-6 shadow-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-semibold text-gray-800">试运行结果</h2>
+            <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-700">
+              前 {trial.results.length} 条示例
+            </span>
+            <span className="text-sm text-gray-500">总耗时 {trial.total_runtime_ms}ms</span>
+            <span className="text-xs text-gray-400">试运行不判对错、不留提交记录，不影响提交数、通过数、积分与成就</span>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-white/60">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-600">用例</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-600">输入</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-600">实际输出</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-600">耗时</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {trial.results.map((r) => (
+                  <tr key={r.test_case_index}>
+                    <td className="px-4 py-2">#{r.test_case_index + 1}</td>
+                    <td className="px-4 py-2 font-mono text-xs">{r.input || '(空)'}</td>
+                    <td className="px-4 py-2 font-mono text-xs">
+                      {r.error_message ? (
+                        <span className="text-rose-600">{r.error_message}</span>
+                      ) : (
+                        r.actual || '(空输出)'
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-xs text-gray-500">{r.runtime_ms}ms</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {submission && (
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
