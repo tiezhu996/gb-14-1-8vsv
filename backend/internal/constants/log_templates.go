@@ -35,6 +35,7 @@ const (
 	LogProblemPublish       = "problem.published"
 	LogProblemListFailed    = "problem.list_failed"
 	LogSubmissionCreated    = "submission.created"
+	LogSubmissionTestRun    = "submission.test_run"
 	LogSubmissionJudgeStart = "submission.judge_start"
 	LogSubmissionAccepted   = "submission.accepted"
 	LogSubmissionPartial    = "submission.partial"

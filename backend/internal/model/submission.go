@@ -16,6 +16,16 @@ type JudgeResult struct {
 	ErrorMessage  string `bson:"error_message" json:"error_message"`
 }
 
+// TestRunResult 试运行单条示例结果：只记录实际输出与耗时，不比对期望输出、不判对错。
+// 与 JudgeResult 不同：该结构仅用于试运行接口响应，不落库。
+type TestRunResult struct {
+	Index        int    `json:"index"`
+	Input        string `json:"input"`
+	Actual       string `json:"actual"`
+	RuntimeMs    int64  `json:"runtime_ms"`
+	ErrorMessage string `json:"error_message"`
+}
+
 // Submission 提交评测实体：状态机 pending -> judging -> accepted/partial/runtime_error/timeout。
 type Submission struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`

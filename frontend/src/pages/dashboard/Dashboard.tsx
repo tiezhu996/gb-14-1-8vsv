@@ -43,11 +43,12 @@ export default function Dashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard label="累计学习时长" value={formatDuration(data?.total_learning_min || 0)} icon="⏱️" />
         <StatCard label="完成课程" value={data?.completed_courses || 0} icon="📚" />
         <StatCard label="解题总数" value={data?.solved_count || 0} icon="🧩" />
         <StatCard label="提交次数" value={data?.total_submissions || 0} icon="📝" />
+        <StatCard label="今日试运行" value={data?.today_test_runs || 0} icon="🧪" />
         <StatCard label="累计积分" value={data?.points || 0} icon="⭐" />
       </div>
 

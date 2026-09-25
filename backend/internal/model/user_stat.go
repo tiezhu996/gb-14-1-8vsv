@@ -18,6 +18,8 @@ type UserStat struct {
 	LanguageDist map[string]int64 `bson:"language_dist" json:"language_dist"`
 	// DailyActivity 每日学习热力图：yyyy-MM-dd -> 活跃次数。
 	DailyActivity map[string]int64 `bson:"daily_activity" json:"daily_activity"`
-	CreatedAt     time.Time        `bson:"created_at" json:"created_at"`
-	UpdatedAt     time.Time        `bson:"updated_at" json:"updated_at"`
+	// TestRunDaily 每日试运行次数：yyyy-MM-dd -> 次数（不计入提交统计与热力图）。
+	TestRunDaily map[string]int64 `bson:"test_run_daily" json:"test_run_daily"`
+	CreatedAt    time.Time        `bson:"created_at" json:"created_at"`
+	UpdatedAt    time.Time        `bson:"updated_at" json:"updated_at"`
 }

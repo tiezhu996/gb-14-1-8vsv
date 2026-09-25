@@ -16,6 +16,7 @@ type DashboardResponse struct {
 	CompletedCourses   int64            `json:"completed_courses"`
 	SolvedCount        int64            `json:"solved_count"`
 	TotalSubmissions   int64            `json:"total_submissions"`
+	TodayTestRuns      int64            `json:"today_test_runs"`
 	StreakDays         int              `json:"streak_days"`
 	Points             int64            `json:"points"`
 	LanguageDist       map[string]int64 `json:"language_dist"`

@@ -15,6 +15,9 @@ const (
 // DefaultJudgeTimeout 评测默认超时（秒），与提示词"运行超时限制 10 秒"对齐。
 const DefaultJudgeTimeout = 10
 
+// TestRunSampleCount 试运行取题目前 N 条示例输入（不判对错、不留提交记录）。
+const TestRunSampleCount = 2
+
 // 支持的评测语言枚举。
 const (
 	LanguagePython    = "python"

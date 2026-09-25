@@ -90,6 +90,51 @@ func TestJudgePythonTimeout(t *testing.T) {
 	}
 }
 
+func TestRunSamplesPython(t *testing.T) {
+	if !hasPython() {
+		t.Skip("python3 not available")
+	}
+	j := newTestJudge(t)
+	code := "a, b = map(int, input().split())\nprint(a + b)"
+	results, total := j.RunSamples(context.Background(), constants.LanguagePython, code, []string{"1 2", "10 20"}, 10)
+	if len(results) != 2 {
+		t.Fatalf("results len = %d, want 2", len(results))
+	}
+	if got := util.NormalizeOutput(results[0].Actual); got != "3" {
+		t.Errorf("results[0].Actual = %q, want %q", got, "3")
+	}
+	if got := util.NormalizeOutput(results[1].Actual); got != "30" {
+		t.Errorf("results[1].Actual = %q, want %q", got, "30")
+	}
+	for i, r := range results {
+		if r.ErrorMessage != "" {
+			t.Errorf("results[%d].ErrorMessage = %q, want empty", i, r.ErrorMessage)
+		}
+	}
+	if total <= 0 {
+		t.Errorf("total runtime = %d, want > 0", total)
+	}
+}
+
+func TestRunSamplesContinuesAfterError(t *testing.T) {
+	if !hasPython() {
+		t.Skip("python3 not available")
+	}
+	j := newTestJudge(t)
+	// 第一条输入非法触发运行错误，第二条仍应继续运行。
+	code := "n = int(input())\nprint(n * 2)"
+	results, _ := j.RunSamples(context.Background(), constants.LanguagePython, code, []string{"abc", "21"}, 10)
+	if len(results) != 2 {
+		t.Fatalf("results len = %d, want 2", len(results))
+	}
+	if results[0].ErrorMessage == "" {
+		t.Error("results[0].ErrorMessage empty, want runtime error")
+	}
+	if got := util.NormalizeOutput(results[1].Actual); got != "42" {
+		t.Errorf("results[1].Actual = %q, want %q", got, "42")
+	}
+}
+
 func TestCalcScore(t *testing.T) {
 	tests := []struct {
 		name   string

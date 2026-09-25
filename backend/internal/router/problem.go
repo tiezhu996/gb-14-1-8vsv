@@ -17,6 +17,8 @@ func registerProblemRoutes(api *gin.RouterGroup, ph *handler.ProblemHandler, sh 
 	api.DELETE("/problems/:id", auth, admin, audit, ph.Delete)
 	// 提交评测
 	api.POST("/problems/:id/submit", auth, audit, sh.Submit)
+	// 试运行（不判对错、不留提交记录）
+	api.POST("/problems/:id/test-run", auth, audit, sh.TestRun)
 	// 讨论区
 	api.GET("/problems/:id/discussions", auth, dh.ListByProblem)
 	api.POST("/problems/:id/discussions", auth, audit, dh.Create)

@@ -86,6 +86,32 @@ func (s *JudgeService) Judge(ctx context.Context, language, code string, testCas
 	return results, constants.SubmissionPartial, calcScore(passed, len(testCases)), totalRuntime, ""
 }
 
+// RunSamples 试运行：逐条运行示例输入，只回显实际输出与耗时，不比对期望输出、不判对错。
+// 与 Judge 不同：单条出错不中断后续示例，也不产生通过/失败结论与得分。
+func (s *JudgeService) RunSamples(ctx context.Context, language, code string, inputs []string, timeLimit int) ([]model.TestRunResult, int64) {
+	if timeLimit <= 0 {
+		timeLimit = constants.DefaultJudgeTimeout
+	}
+	results := make([]model.TestRunResult, 0, len(inputs))
+	var totalRuntime int64
+	for i, input := range inputs {
+		actual, runtimeMs, runErr := s.runCode(ctx, language, code, input, timeLimit)
+		totalRuntime += runtimeMs
+		res := model.TestRunResult{
+			Index:     i,
+			Input:     input,
+			Actual:    actual,
+			RuntimeMs: runtimeMs,
+		}
+		if runErr != nil {
+			res.ErrorMessage = runErr.Error()
+			s.logger.Warn(constants.LogJudgeRunFailed, "test_run_case", i, "error", runErr.Error())
+		}
+		results = append(results, res)
+	}
+	return results, totalRuntime
+}
+
 // runCode 在独立工作目录中运行用户代码。
 func (s *JudgeService) runCode(ctx context.Context, language, code, input string, timeoutSeconds int) (string, int64, error) {
 	dir, err := os.MkdirTemp(s.workDir, "run-*")

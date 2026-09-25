@@ -65,6 +65,14 @@ paths:
         - { name: id, in: path, required: true, schema: { type: string } }
       responses:
         '200': { description: ok }
+  /problems/{id}/test-run:
+    post:
+      summary: 试运行（取题目前两条示例输入运行，只回显实际输出与耗时，不判对错、不留提交记录）
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: ok }
   /submissions:
     get:
       summary: 提交记录列表

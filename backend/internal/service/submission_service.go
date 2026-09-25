@@ -113,6 +113,49 @@ func (s *SubmissionService) Submit(ctx context.Context, userID primitive.ObjectI
 	return &resp, nil
 }
 
+// TestRun 试运行：取题目前两条示例输入在服务端运行，只回显实际输出与耗时，不判对错。
+// 不产生提交记录，不更新题目提交数/通过数、用户积分与成就，仅累计当日试运行次数。
+func (s *SubmissionService) TestRun(ctx context.Context, userID primitive.ObjectID, problemID primitive.ObjectID, req *dto.TestRunRequest) (*dto.TestRunResponse, error) {
+	problem, err := s.problemRepo.FindByID(ctx, problemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrProblemNotFound) {
+			return nil, util.WrapAppError(constants.CodeProblemNotFound, constants.MsgProblemNotFound, err)
+		}
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	if problem.Status != constants.StatusPublished {
+		return nil, util.WrapAppError(constants.CodeProblemLocked, constants.MsgProblemLocked, nil)
+	}
+	if !strutil.Contains(problem.Languages, req.Language) {
+		return nil, util.WrapAppError(constants.CodeJudgeLanguage, constants.MsgJudgeLanguage, nil)
+	}
+	if len(problem.TestCases) == 0 {
+		return nil, util.WrapAppError(constants.CodeProblemNoCases, constants.MsgProblemNoCases, nil)
+	}
+
+	n := constants.TestRunSampleCount
+	if len(problem.TestCases) < n {
+		n = len(problem.TestCases)
+	}
+	inputs := make([]string, 0, n)
+	for _, tc := range problem.TestCases[:n] {
+		inputs = append(inputs, tc.Input)
+	}
+	results, totalRuntime := s.judge.RunSamples(ctx, req.Language, req.Code, inputs, problem.TimeLimit)
+
+	// 仅累计当日试运行次数（原子操作，无事务依赖），其余统计一概不动。
+	dayKey := util.SignInDailyKey(time.Now())
+	_ = s.statRepo.AddTestRun(ctx, userID, dayKey)
+	todayTestRuns := int64(0)
+	if stat, err := s.statRepo.GetByUser(ctx, userID); err == nil {
+		todayTestRuns = stat.TestRunDaily[dayKey]
+	}
+	s.logger.Info(constants.LogSubmissionTestRun, "user_id", userID.Hex(), "problem_id", problemID.Hex(), "language", req.Language, "cases", n)
+
+	resp := dto.ToTestRunResponse(problemID.Hex(), req.Language, results, totalRuntime, todayTestRuns)
+	return &resp, nil
+}
+
 // Get 查询提交记录（本人或管理员）。
 func (s *SubmissionService) Get(ctx context.Context, submissionID, userID primitive.ObjectID, role string) (*dto.SubmissionResponse, error) {
 	sub, err := s.subRepo.FindByID(ctx, submissionID)

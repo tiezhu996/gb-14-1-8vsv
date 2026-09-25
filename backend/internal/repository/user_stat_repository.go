@@ -43,6 +43,7 @@ func (r *UserStatRepository) Upsert(ctx context.Context, userID primitive.Object
 			"accepted_submissions": 0,
 			"language_dist":      bson.M{},
 			"daily_activity":     bson.M{},
+			"test_run_daily":     bson.M{},
 			"created_at":         now,
 			"updated_at":         now,
 		}},
@@ -90,6 +91,18 @@ func (r *UserStatRepository) AddSubmission(ctx context.Context, userID primitive
 	})
 	if err != nil {
 		return fmt.Errorf("add submission stat: %w", err)
+	}
+	return nil
+}
+
+// AddTestRun 原子增加当日试运行次数（不影响提交数/通过数/积分与热力图）。
+func (r *UserStatRepository) AddTestRun(ctx context.Context, userID primitive.ObjectID, dayKey string) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"user_id": userID}, bson.M{
+		"$inc": bson.M{"test_run_daily." + dayKey: 1},
+		"$set": bson.M{"updated_at": time.Now()},
+	})
+	if err != nil {
+		return fmt.Errorf("add test run stat: %w", err)
 	}
 	return nil
 }

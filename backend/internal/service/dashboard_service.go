@@ -40,6 +40,7 @@ func (s *DashboardService) Get(ctx context.Context, userID primitive.ObjectID) (
 		CompletedCourses: stat.CompletedCourses,
 		SolvedCount:      user.SolvedCount,
 		TotalSubmissions: stat.TotalSubmissions,
+		TodayTestRuns:    stat.TestRunDaily[util.SignInDailyKey(time.Now())],
 		StreakDays:       user.StreakDays,
 		Points:           user.Points,
 		LanguageDist:     stat.LanguageDist,

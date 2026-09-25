@@ -101,6 +101,22 @@ export interface Submission {
   created_at: string
 }
 
+export interface TestRunResult {
+  index: number
+  input: string
+  actual: string
+  runtime_ms: number
+  error_message: string
+}
+
+export interface TestRunResponse {
+  problem_id: string
+  language: string
+  results: TestRunResult[]
+  total_runtime_ms: number
+  today_test_runs: number
+}
+
 export interface Discussion {
   id: string
   problem_id: string
@@ -140,6 +156,7 @@ export interface Dashboard {
   completed_courses: number
   solved_count: number
   total_submissions: number
+  today_test_runs: number
   streak_days: number
   points: number
   language_dist: Record<string, number>
